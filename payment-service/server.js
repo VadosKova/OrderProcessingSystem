@@ -3,7 +3,23 @@ const connectRabbit = require("../shared/rabbit");
 
 const processedOrders = new Set();
 
+async function waitForMongo() {
+  const mongoose = require("mongoose");
+  let connected = false;
+  while (!connected) {
+    try {
+      await mongoose.connect(process.env.MONGO_URI_ORDER, { useNewUrlParser: true });
+      connected = true;
+      console.log("MongoDB connected");
+    } catch (err) {
+      console.log("Waiting for MongoDB");
+      await new Promise(res => setTimeout(res, 2000));
+    }
+  }
+}
+
 async function start() {
+  await waitForMongo();
   const channel = await connectRabbit();
 
   const queue = "payment_queue";

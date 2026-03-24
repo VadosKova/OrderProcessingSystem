@@ -9,27 +9,61 @@ app.use(express.json());
 
 let channel;
 
-mongoose.connect(process.env.MONGO_URI_ORDER);
+async function waitForMongo() {
+  let connected = false;
+  while (!connected) {
+    try {
+      await mongoose.connect(process.env.MONGO_URI_ORDER, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      });
+      connected = true;
+      console.log("MongoDB connected");
+    } catch (err) {
+      console.log("Waiting for MongoDB");
+      await new Promise((res) => setTimeout(res, 2000));
+    }
+  }
+}
 
-connectRabbit().then((ch) => {
-  channel = ch;
-});
+async function waitForRabbit() {
+  let ch;
+  let connected = false;
+  while (!connected) {
+    try {
+      ch = await connectRabbit();
+      connected = true;
+      console.log("RabbitMQ connected");
+    } catch (err) {
+      console.log("Waiting for RabbitMQ");
+      await new Promise((res) => setTimeout(res, 2000));
+    }
+  }
+  return ch;
+}
 
-app.post("/orders", async (req, res) => {
-  const order = await Order.create({ status: "NEW" });
+async function start() {
+  await waitForMongo();
+  channel = await waitForRabbit();
 
-  channel.publish(
-    process.env.EXCHANGE_NAME,
-    "order.created",
-    Buffer.from(JSON.stringify({ orderId: order._id }))
-  );
+  app.post("/orders", async (req, res) => {
+    const order = await Order.create({ status: "NEW" });
 
-  res.json(order);
-});
+    channel.publish(
+      process.env.EXCHANGE_NAME,
+      "order.created",
+      Buffer.from(JSON.stringify({ orderId: order._id }))
+    );
 
-app.get("/orders/:id", async (req, res) => {
-  const order = await Order.findById(req.params.id);
-  res.json(order);
-});
+    res.json(order);
+  });
 
-app.listen(3000, () => console.log("Order Service running"));
+  app.get("/orders/:id", async (req, res) => {
+    const order = await Order.findById(req.params.id);
+    res.json(order);
+  });
+
+  app.listen(3000, () => console.log("Order Service running"));
+}
+
+start();
