@@ -13,6 +13,7 @@ async function start() {
   const channel = await connectRabbit();
 
   const queue = "status_queue";
+  const processed = new Set();
 
   await channel.assertQueue(queue);
   await channel.bindQueue(queue, process.env.EXCHANGE_NAME, "payment.*");
@@ -20,12 +21,18 @@ async function start() {
   channel.consume(queue, async (msg) => {
     const { orderId } = JSON.parse(msg.content.toString());
 
+    if (processed.has(orderId)) {
+      return channel.ack(msg);
+    }
+
     const status =
       msg.fields.routingKey === "payment.success"
         ? "PAID"
         : "CANCELLED";
 
     await Order.findByIdAndUpdate(orderId, { status });
+
+    processed.add(orderId);
 
     console.log("Order updated:", orderId, status);
 
