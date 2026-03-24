@@ -14,3 +14,12 @@ app.post("/orders", async (req, res) => {
   );
   res.json(response.data);
 });
+
+app.get("/orders/:id", async (req, res) => {
+  const response = await axios.get(
+    `${ORDER_SERVICE_URL}/orders/${req.params.id}`
+  );
+  res.json(response.data);
+});
+
+app.listen(4000, () => console.log("API Gateway running"));
