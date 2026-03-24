@@ -50,6 +50,14 @@ async function start() {
       return channel.ack(msg);
     }
 
+    console.log("Sent to DLQ:", orderId);
+
+    channel.publish(
+      "dlq",
+      "",
+      Buffer.from(JSON.stringify({ orderId }))
+    );
+
     channel.ack(msg);
   });
 }
