@@ -1,0 +1,51 @@
+version: "3.8"
+
+services:
+  rabbit:
+    image: rabbit:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  order-db:
+    image: mongo
+    ports:
+      - "27017:27017"
+
+  payment-db:
+    image: mongo
+    ports:
+      - "27018:27017"
+
+  order-service:
+    build: ./order-service
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    depends_on:
+      - rabbit
+      - order-db
+
+  payment-service:
+    build: ./payment-service
+    env_file:
+      - .env
+    depends_on:
+      - rabbit
+      - payment-db
+
+  notification-service:
+    build: ./notification-service
+    env_file:
+      - .env
+    depends_on:
+      - rabbit
+
+  order-status-updater:
+    build: ./order-status-updater
+    env_file:
+      - .env
+    depends_on:
+      - rabbit
+      - order-db
