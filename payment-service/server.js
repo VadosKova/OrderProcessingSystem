@@ -33,6 +33,23 @@ async function start() {
       return channel.ack(msg);
     }
 
+    if (retries < process.env.RETRY_COUNT) {
+      console.log("Retry:", orderId, "attempt:", retries + 1);
+
+      channel.publish(
+        process.env.EXCHANGE_NAME,
+        "order.created",
+        Buffer.from(
+          JSON.stringify({
+            orderId,
+            retries: retries + 1,
+          })
+        )
+      );
+
+      return channel.ack(msg);
+    }
+
     channel.ack(msg);
   });
 }
