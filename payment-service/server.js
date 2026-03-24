@@ -1,27 +1,37 @@
 require("dotenv").config();
 const connectRabbit = require("../shared/rabbit");
 
+const processedOrders = new Set();
+
 async function start() {
   const channel = await connectRabbit();
 
   const queue = "payment_queue";
 
-  await channel.assertQueue(queue);
+  await channel.assertQueue(queue, { durable: true, deadLetterExchange: "dlq" });
   await channel.bindQueue(queue, process.env.EXCHANGE_NAME, "order.created");
 
   channel.consume(queue, (msg) => {
-    const { orderId } = JSON.parse(msg.content.toString());
+    const data = JSON.parse(msg.content.toString());
+    const { orderId, retries = 0 } = data;
 
-    const success = Math.random() > 0.5;
-    const event = success ? "payment.success" : "payment.failed";
+    if (processedOrders.has(orderId)) {
+      console.log("Duplicate ignored:", orderId);
+      return channel.ack(msg);
+    }
 
-    console.log("Payment:", event, orderId);
+    if (success) {
+      processedOrders.add(orderId);
 
-    channel.publish(
-      process.env.EXCHANGE_NAME,
-      event,
-      Buffer.from(JSON.stringify({ orderId }))
-    );
+      channel.publish(
+        process.env.EXCHANGE_NAME,
+        "payment.success",
+        Buffer.from(JSON.stringify({ orderId }))
+      );
+
+      console.log("Payment success:", orderId);
+      return channel.ack(msg);
+    }
 
     channel.ack(msg);
   });
