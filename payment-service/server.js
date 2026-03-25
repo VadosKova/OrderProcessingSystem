@@ -18,9 +18,27 @@ async function waitForMongo() {
   }
 }
 
+async function waitForRabbit() {
+  let connected = false;
+  let ch;
+
+  while (!connected) {
+    try {
+      ch = await connectRabbit();
+      connected = true;
+      console.log("RabbitMQ connected");
+    } catch (err) {
+      console.log("Waiting for RabbitMQ");
+      await new Promise(res => setTimeout(res, 2000));
+    }
+  }
+
+  return ch;
+}
+
 async function start() {
   await waitForMongo();
-  const channel = await connectRabbit();
+  const channel = await waitForRabbit();
 
   const queue = "payment_queue";
 

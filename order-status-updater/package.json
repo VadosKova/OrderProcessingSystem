@@ -2,7 +2,7 @@
   "name": "order-status-updater",
   "version": "1.0.0",
   "dependencies": {
-    "mongoose": "^7.0.0",
+    "mongoose": "^8.0.0",
     "amqplib": "^0.10.3",
     "dotenv": "^16.0.0"
   }
