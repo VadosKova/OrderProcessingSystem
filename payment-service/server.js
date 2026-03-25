@@ -1,5 +1,5 @@
 require("dotenv").config();
-const connectRabbit = require("../shared/rabbit");
+const connectRabbit = require("./shared/rabbit");
 
 const processedOrders = new Set();
 

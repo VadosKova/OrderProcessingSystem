@@ -1,6 +1,6 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
-const connectRabbit = require("../shared/rabbit");
+const connectRabbit = require("./shared/rabbit");
 
 const Order = mongoose.model(
   "Order",

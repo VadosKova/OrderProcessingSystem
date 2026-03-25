@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
-const connectRabbit = require("../shared/rabbit");
+const connectRabbit = require("./shared/rabbit");
 const Order = require("./models/Order");
 
 const app = express();
