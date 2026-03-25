@@ -18,7 +18,9 @@ services:
       - "27018:27017"
 
   order-service:
-    build: ./order-service
+    build:
+      context: .
+      dockerfile: order-service/Dockerfile
     ports:
       - "3000:3000"
     env_file:
@@ -28,7 +30,9 @@ services:
       - order-db
 
   payment-service:
-    build: ./payment-service
+    build: 
+      context: .
+      dockerfile: payment-service/Dockerfile
     env_file:
       - .env
     depends_on:
@@ -36,14 +40,18 @@ services:
       - payment-db
 
   notification-service:
-    build: ./notification-service
+    build: 
+      context: .
+      dockerfile: notification-service/Dockerfile
     env_file:
       - .env
     depends_on:
       - rabbit
 
   order-status-updater:
-    build: ./order-status-updater
+    build: 
+      context: .
+      dockerfile: order-status-updater/Dockerfile
     env_file:
       - .env
     depends_on:
@@ -51,7 +59,9 @@ services:
       - order-db
   
   api-gateway:
-    build: ./api-gateway
+    build: 
+      context: .
+      dockerfile: api-gateway/Dockerfile
     ports:
       - "4000:4000"
     depends_on:
